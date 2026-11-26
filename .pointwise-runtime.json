@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "kind": "api",
+  "setup": [],
+  "start": ["python3", "-B", "-m", "booth.http_api", "--database", "theatre.sqlite3", "--host", "${POINTWISE_HOST}", "--port", "${POINTWISE_PORT}"],
+  "readiness_path": "/health",
+  "verify": ["python3", "-B", "check_project.py"],
+  "demo": ["python3", "-B", "-m", "tests.test_http", "--demo"]
+}

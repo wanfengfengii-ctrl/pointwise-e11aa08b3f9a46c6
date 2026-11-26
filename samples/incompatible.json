@@ -1,0 +1,15 @@
+{
+  "title": "河桥开场校样",
+  "editions": [
+    {"edition_id": "alpha", "length": 5, "sound_windows": [[2, 3], [4, 5]]},
+    {"edition_id": "beta", "length": 5, "sound_windows": [[2, 3]]}
+  ],
+  "segments": [
+    {"segment_id": "A", "length": 2, "deadlines": {"alpha": 2, "beta": 5}},
+    {"segment_id": "B", "length": 1, "deadlines": {"alpha": 4, "beta": 2}}
+  ],
+  "signals": [
+    {"code": "alpha", "tick": 2, "edition_id": "alpha"},
+    {"code": "beta", "tick": 2, "edition_id": "beta"}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "title": "河桥加长开场",
+  "editions": [
+    {"edition_id": "alpha", "length": 5, "sound_windows": [[4, 5]]},
+    {"edition_id": "beta", "length": 5, "sound_windows": [[3, 4]]}
+  ],
+  "segments": [
+    {"segment_id": "A", "length": 3, "deadlines": {"alpha": 3, "beta": 3}},
+    {"segment_id": "B", "length": 1, "deadlines": {"alpha": 4, "beta": 5}}
+  ],
+  "signals": [
+    {"code": "alpha", "tick": 2, "edition_id": "alpha"},
+    {"code": "beta", "tick": 2, "edition_id": "beta"}
+  ]
+}

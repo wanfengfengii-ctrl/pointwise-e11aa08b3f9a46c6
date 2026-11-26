@@ -39,6 +39,52 @@ class ShowTests(HttpCase):
             '两版 A 的截止为 2，只能占 [0,2)。甲和乙后续唯一可播 B 的拍分别是 3 和 4。',
         )
 
+    def test_common_wait_is_shared_before_confirmation(self):
+        programme = {
+            'editions': [
+                {'edition_id': 'alpha', 'length': 5, 'sound_windows': [[0, 1]]},
+                {'edition_id': 'beta', 'length': 5, 'sound_windows': [[0, 1], [2, 4]]},
+            ],
+            'segments': [
+                {'segment_id': 'A', 'length': 1, 'deadlines': {'alpha': 2, 'beta': 2}},
+                {'segment_id': 'B', 'length': 1, 'deadlines': {'alpha': 3, 'beta': 5}},
+            ],
+            'signals': [
+                {'code': 'alpha', 'tick': 2, 'edition_id': 'alpha'},
+                {'code': 'beta', 'tick': 2, 'edition_id': 'beta'},
+            ],
+        }
+        issue_id = self.issue(self.submit(programme))
+        expected_kinds = {
+            'alpha': ['wait', 'start', 'start', 'wait', 'wait'],
+            'beta': ['wait', 'start', 'wait', 'wait', 'start'],
+        }
+        expected = {
+            'alpha': [interval('A', 1, 2), interval('B', 2, 3)],
+            'beta': [interval('A', 1, 2), interval('B', 4, 5)],
+        }
+        actual = {}
+        for edition_id in ('alpha', 'beta'):
+            show = self.mount_and_start(issue_id, edition_id)
+            kinds = []
+            for tick in range(5):
+                result = self.advance(show, tick, edition_id if tick == 2 else None)
+                kinds.append(result['action']['kind'])
+                if tick < 2:
+                    self.assertIsNone(result['show']['edition_id'])
+                else:
+                    self.assertEqual(result['show']['edition_id'], edition_id)
+            self.assertEqual(kinds, expected_kinds[edition_id])
+            actual[edition_id] = self.finish(show)['intervals']
+        self.assertEqual(actual, expected)
+        scenario(
+            'shared_wait', programme, expected, actual,
+            {'closed_editions': ['alpha', 'beta']},
+            {'closed_editions': list(actual)},
+            ['release/feasibility.py', 'show/playback.py'],
+            '第 0 拍两版都必须等待，第 1 拍共同启动 A；提示后甲在 2 播 B，乙等到 4。',
+        )
+
     def test_same_tick_signal_start(self):
         programme = sample('branching')
         programme['editions'][0]['sound_windows'] = [[3, 5]]

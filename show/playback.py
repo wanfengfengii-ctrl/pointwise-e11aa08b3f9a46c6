@@ -16,8 +16,17 @@ def decide_tick_action(issued: IssuedProgram, show: ShowSession) -> TickAction:
     if show.active is not None:
         return TickAction('continue', show.active.segment_id)
 
-    edition = issued.revision.editions[0]
-    starts = issued.basis.shared_starts + dict(issued.basis.edition_starts)[edition.edition_id]
+    edition_schedules = dict(issued.basis.edition_starts)
+    if show.edition_id is None:
+        # Before a dual-edition confirmation the audience has one observation.
+        # Edition-specific starts may only be consulted after the signal.
+        starts = issued.basis.shared_starts
+        checked_editions = issued.revision.editions
+    else:
+        edition = issued.revision.edition(show.edition_id)
+        starts = issued.basis.shared_starts + edition_schedules[edition.edition_id]
+        checked_editions = (edition,)
+
     segment_id = next((segment_id for start, segment_id in starts if start == tick), None)
     if segment_id is None:
         return TickAction('wait')
@@ -25,8 +34,11 @@ def decide_tick_action(issued: IssuedProgram, show: ShowSession) -> TickAction:
         raise RuntimeError('issued start is not for a pending narration segment')
 
     segment = issued.revision.segment(segment_id)
-    if not fits_narration(edition, tick, segment.length, segment.deadline_for(edition.edition_id)):
-        raise RuntimeError('issued start does not fit the scheduled edition constraints')
+    for edition in checked_editions:
+        if not fits_narration(
+            edition, tick, segment.length, segment.deadline_for(edition.edition_id)
+        ):
+            raise RuntimeError('issued start does not fit the scheduled edition constraints')
     return TickAction('start', segment_id)
 
 
